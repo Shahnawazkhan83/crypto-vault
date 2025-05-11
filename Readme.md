@@ -30,6 +30,7 @@ CryptoVault is a secure, feature-rich custodial wallet system that allows users 
 ## Tech Stack
 
 ### Frontend
+
 - **React** with TypeScript and Vite for fast development
 - **React Router** for navigation
 - **Tailwind CSS** for styling with responsive design
@@ -39,6 +40,7 @@ CryptoVault is a secure, feature-rich custodial wallet system that allows users 
 - **Context API** for state management
 
 ### Backend
+
 - **Node.js** with Express and TypeScript
 - **MongoDB** with Mongoose for data modeling
 - **JWT** for authentication with refresh token mechanism
@@ -105,6 +107,8 @@ The backend provides a comprehensive RESTful API for all wallet operations:
 - **Transaction Endpoints**: `/api/wallet/:address/send`, `/api/wallet/:address/estimate-gas`
 - **Swap Endpoints**: `/api/swap/price`, `/api/swap/quote`, `/api/swap/execute`
 
+🔍 **Explore the full API interactively via [Swagger UI – http://localhost:3001/api-docs](http://localhost:3001/api-docs)**  
+Powered by OpenAPI 3.0, this interface enables seamless testing, faster integration, and better dev experience.
 
 ## Contributing
 
@@ -126,3 +130,19 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - [Ethers.js](https://docs.ethers.io/) for Ethereum interactions
 - [Tailwind CSS](https://tailwindcss.com/) for styling
 - [HeadlessUI](https://headlessui.com/) for accessible components
+
+## Developer & Project Information
+
+**Shahnawaz Khan**
+
+_Full Stack Blockchain Developer_
+
+This project was developed entirely from scratch by Shahnawaz Khan as part of a professional assignment. All intellectual property and rights are reserved by the author.
+
+**Connect with me:**
+
+- GitHub: [Shahnawazkhan83](https://github.com/Shahnawazkhan83/)
+
+- LinkedIn: [shahnawaz-khan-web3](https://www.linkedin.com/in/shahnawaz-khan-web3/)
+
+---
