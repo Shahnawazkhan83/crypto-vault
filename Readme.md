@@ -6,7 +6,7 @@ CryptoVault is a secure, feature-rich custodial wallet system that allows users 
 ![CryptoVault Dashboard](./frontend/src/assets/Screenshot_11-5-2025_135055_localhost.jpeg)
 ![CryptoVault Dashboard](./frontend/src/assets/Screenshot_11-5-2025_135119_localhost.jpeg)
 ![CryptoVault Dashboard](./frontend/src/assets/Screenshot_11-5-2025_135145_localhost.jpeg)
-![CryptoVault Dashboard](./frontend/src/assets/Screenshot_11-5-2025_135221_localhost.jpeg)
+![CryptoVault Dashboard](./frontend/src/assets/Screenshot_11-5-2025_233721_localhost.jpeg)
 
 ## Features
 
