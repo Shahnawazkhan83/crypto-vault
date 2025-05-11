@@ -7,6 +7,10 @@ import rateLimit from "express-rate-limit";
 import dotenv from "dotenv";
 import path from "path";
 
+import swaggerUi from "swagger-ui-express";
+import * as fs from "fs";
+import * as yaml from "js-yaml";
+
 // Import routes
 import authRoutes from "./routes/auth.routes";
 import walletRoutes from "./routes/wallet.routes";
@@ -36,6 +40,11 @@ app.use(helmet());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Load Swagger document with proper type assertion
+const swaggerDocument = yaml.load(
+  fs.readFileSync(path.join(__dirname, "../swagger.yaml"), "utf8")
+) as swaggerUi.JsonObject;
+
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -44,6 +53,7 @@ const limiter = rateLimit({
   legacyHeaders: false,
 });
 app.use(limiter);
+
 // Simple test route
 app.get("/api/test", (req, res) => {
   res.json({ message: "Backend is working!" });
@@ -51,11 +61,15 @@ app.get("/api/test", (req, res) => {
 app.get("/api/ping", (req, res) => {
   res.json({ message: "pong" });
 });
+
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/wallet", walletRoutes);
 app.use("/api/token", tokenRoutes);
 app.use("/api/swap", swapRoutes);
+
+// Swagger docs
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // Health check endpoint
 app.get("/health", (req, res) => {

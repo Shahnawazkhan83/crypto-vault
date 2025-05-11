@@ -43,6 +43,36 @@ class SwapService {
     const token = tokenList.find((t) => t.symbol === symbol);
     return token ? token.address : null;
   }
+  private getMockSwapResponse(
+    sellToken: string,
+    buyToken: string,
+    sellAmount: string,
+    takerAddress: string
+  ) {
+    const sellTokenAddress = this.getTokenAddressBySymbol(sellToken);
+    const buyTokenAddress = this.getTokenAddressBySymbol(buyToken);
+
+    return {
+      sellTokenAddress: sellTokenAddress,
+      buyTokenAddress: buyTokenAddress,
+      sellAmount: sellAmount,
+      buyAmount: "123456789000000000",
+      price: "2534.23",
+      guaranteedPrice: "2508.89",
+      to: "0x1234567890123456789012345678901234567890",
+      data: "0x1234567890",
+      value: "0",
+      gas: "150000",
+      estimatedGas: "150000",
+      gasPrice: "20000000000",
+      protocolFee: "0",
+      minimumProtocolFee: "0",
+      buyTokenToEthRate: "2534.23",
+      sellTokenToEthRate: "1",
+      sources: [{ name: "0x", proportion: "1" }],
+      displayBuyAmount: "123.45",
+    };
+  }
 
   // Check if token is approved for Permit2
   async checkTokenAllowance(
@@ -132,7 +162,6 @@ class SwapService {
     }
   }
 
-  // Get indicative price quote (no transaction data)
   async getPrice(
     sellToken: string,
     buyToken: string,
@@ -140,6 +169,16 @@ class SwapService {
     takerAddress: string
   ) {
     try {
+      // Use mock for Sepolia testnet
+      if (process.env.NETWORK === "sepolia") {
+        console.log("Using mock price response for Sepolia testnet");
+        return this.getMockSwapResponse(
+          sellToken,
+          buyToken,
+          sellAmount,
+          takerAddress
+        );
+      }
       // Get token addresses
       const sellTokenAddress = this.getTokenAddressBySymbol(sellToken);
       const buyTokenAddress = this.getTokenAddressBySymbol(buyToken);
@@ -209,12 +248,62 @@ class SwapService {
     buyToken: string,
     sellAmount: string,
     takerAddress: string,
-    slippagePercentage: string = "0.01" // Default 1% slippage
+    slippagePercentage: string = "0.01"
   ) {
     try {
       // Get token addresses
       const sellTokenAddress = this.getTokenAddressBySymbol(sellToken);
       const buyTokenAddress = this.getTokenAddressBySymbol(buyToken);
+
+      // Use mock for Sepolia testnet
+      if (process.env.NETWORK === "sepolia") {
+        console.log("Using mock swap quote for Sepolia testnet");
+        const mockResponse = this.getMockSwapResponse(
+          sellToken,
+          buyToken,
+          sellAmount,
+          takerAddress
+        );
+
+        // Add permit2 mock data
+        return {
+          ...mockResponse,
+          needsAllowance: false,
+          sellTokenSymbol: sellToken,
+          buyTokenSymbol: buyToken,
+          validTo: Date.now() + 5 * 60 * 1000,
+          permit2: {
+            eip712: {
+              domain: {
+                name: "Permit2",
+                chainId: 11155111,
+                verifyingContract: "0x000000000022D473030F116dDEE9F6B43aC78BA3",
+              },
+              types: {
+                PermitTransferFrom: [
+                  { name: "permitted", type: "TokenPermissions" },
+                  { name: "spender", type: "address" },
+                  { name: "nonce", type: "uint256" },
+                  { name: "deadline", type: "uint256" },
+                ],
+                TokenPermissions: [
+                  { name: "token", type: "address" },
+                  { name: "amount", type: "uint256" },
+                ],
+              },
+              message: {
+                permitted: {
+                  token: sellTokenAddress,
+                  amount: sellAmount,
+                },
+                spender: "0x1234567890123456789012345678901234567890",
+                nonce: "1",
+                deadline: Math.floor(Date.now() / 1000) + 300,
+              },
+            },
+          },
+        };
+      }
 
       if (!sellTokenAddress || !buyTokenAddress) {
         throw new Error(

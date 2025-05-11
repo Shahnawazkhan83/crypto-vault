@@ -1,0 +1,891 @@
+openapi: 3.0.0
+info:
+  title: Crypto Vault Custodial Crypto Wallet API
+  description: API for managing crypto wallets, tokens, and swaps in a custodial environment
+  version: 1.0.0
+  contact:
+    email:
+servers:
+  - url: http://localhost:3001/api
+    description: Local development server
+  - url: https://api.your-domain.com/api
+    description: Production server
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        username:
+          type: string
+    AuthResponse:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+    Wallet:
+      type: object
+      properties:
+        userId:
+          type: string
+        address:
+          type: string
+        vaultKeyPath:
+          type: string
+        name:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    Token:
+      type: object
+      properties:
+        symbol:
+          type: string
+        name:
+          type: string
+        address:
+          type: string
+          nullable: true
+        decimals:
+          type: integer
+        logoURI:
+          type: string
+    TokenBalance:
+      type: object
+      properties:
+        symbol:
+          type: string
+        name:
+          type: string
+        balance:
+          type: string
+        address:
+          type: string
+          nullable: true
+        decimals:
+          type: integer
+    GasEstimation:
+      type: object
+      properties:
+        gasEstimate:
+          type: string
+        gasPrice:
+          type: string
+        estimatedFeeETH:
+          type: string
+        supportsEIP1559:
+          type: boolean
+        maxFeePerGas:
+          type: string
+        maxPriorityFeePerGas:
+          type: string
+    Transaction:
+      type: object
+      properties:
+        transactionHash:
+          type: string
+        from:
+          type: string
+        to:
+          type: string
+        amount:
+          type: string
+        tokenAddress:
+          type: string
+          nullable: true
+        status:
+          type: string
+        gasLimit:
+          type: string
+        gasPrice:
+          type: string
+        maxFeePerGas:
+          type: string
+        maxPriorityFeePerGas:
+          type: string
+    SwapPrice:
+      type: object
+      properties:
+        sellTokenAddress:
+          type: string
+        buyTokenAddress:
+          type: string
+        sellAmount:
+          type: string
+        buyAmount:
+          type: string
+        price:
+          type: string
+    SwapQuote:
+      type: object
+      properties:
+        sellTokenAddress:
+          type: string
+        buyTokenAddress:
+          type: string
+        sellAmount:
+          type: string
+        buyAmount:
+          type: string
+        price:
+          type: string
+        to:
+          type: string
+        data:
+          type: string
+        value:
+          type: string
+        gas:
+          type: string
+        estimatedGas:
+          type: string
+        gasPrice:
+          type: string
+        sellTokenSymbol:
+          type: string
+        buyTokenSymbol:
+          type: string
+        needsAllowance:
+          type: boolean
+        validTo:
+          type: number
+paths:
+  /auth/register:
+    post:
+      summary: Register a new user
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+                - username
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 8
+                username:
+                  type: string
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              
+  /auth/login:
+    post:
+      summary: Login a user
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        '200':
+          description: User logged in successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /auth/refresh-token:
+    post:
+      summary: Refresh access token
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - userId
+                - refreshToken
+              properties:
+                userId:
+                  type: string
+                refreshToken:
+                  type: string
+      responses:
+        '200':
+          description: Token refreshed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accessToken:
+                    type: string
+                  refreshToken:
+                    type: string
+        '401':
+          description: Invalid refresh token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /auth/logout:
+    post:
+      summary: Logout a user
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - userId
+                - refreshToken
+              properties:
+                userId:
+                  type: string
+                refreshToken:
+                  type: string
+      responses:
+        '200':
+          description: User logged out successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /wallet/generate:
+    post:
+      summary: Generate a new wallet
+      tags:
+        - Wallet
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+      responses:
+        '201':
+          description: Wallet created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  address:
+                    type: string
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /wallet:
+    get:
+      summary: Get all user wallets
+      tags:
+        - Wallet
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: User wallets retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Wallet'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /wallet/{address}:
+    get:
+      summary: Get wallet by address
+      tags:
+        - Wallet
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: address
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Wallet retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Wallet'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Wallet not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /wallet/{address}/balances:
+    get:
+      summary: Get token balances for a wallet
+      tags:
+        - Wallet
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: address
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Token balances retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TokenBalance'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /wallet/{address}/estimate-gas:
+    post:
+      summary: Estimate gas for token transfer
+      tags:
+        - Wallet
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: address
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - toAddress
+                - amount
+              properties:
+                toAddress:
+                  type: string
+                amount:
+                  type: string
+                tokenAddress:
+                  type: string
+                  nullable: true
+                speedOption:
+                  type: string
+                  enum: [slow, standard, fast]
+                  default: standard
+      responses:
+        '200':
+          description: Gas estimation successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GasEstimation'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /wallet/{address}/send:
+    post:
+      summary: Send token
+      tags:
+        - Wallet
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: address
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - toAddress
+                - amount
+              properties:
+                toAddress:
+                  type: string
+                amount:
+                  type: string
+                tokenAddress:
+                  type: string
+                  nullable: true
+                gasOptions:
+                  type: object
+                  properties:
+                    gasLimit:
+                      type: string
+                    gasPrice:
+                      type: string
+                    maxFeePerGas:
+                      type: string
+                    maxPriorityFeePerGas:
+                      type: string
+      responses:
+        '200':
+          description: Token sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /wallet/{address}/approve-permit2:
+    post:
+      summary: Approve token for Permit2
+      tags:
+        - Wallet
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: address
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - tokenAddress
+              properties:
+                tokenAddress:
+                  type: string
+      responses:
+        '200':
+          description: Token approved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  transactionHash:
+                    type: string
+                  status:
+                    type: string
+                  from:
+                    type: string
+                  to:
+                    type: string
+                  spender:
+                    type: string
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /token:
+    get:
+      summary: Get all supported tokens
+      tags:
+        - Token
+      responses:
+        '200':
+          description: Tokens retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Token'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /swap/price:
+    get:
+      summary: Get price info for swap
+      tags:
+        - Swap
+      parameters:
+        - name: sellToken
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: buyToken
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: sellAmount
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: takerAddress
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Price info retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SwapPrice'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /swap/quote:
+    get:
+      summary: Get swap quote
+      tags:
+        - Swap
+      parameters:
+        - name: sellToken
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: buyToken
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: sellAmount
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: takerAddress
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: slippagePercentage
+          in: query
+          schema:
+            type: string
+            default: "0.01"
+      responses:
+        '200':
+          description: Swap quote retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SwapQuote'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /swap/check-allowance:
+    get:
+      summary: Check token allowance for Permit2
+      tags:
+        - Swap
+      parameters:
+        - name: walletAddress
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: tokenAddress
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: amount
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Token allowance check successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  approved:
+                    type: boolean
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /swap/execute:
+    post:
+      summary: Execute swap
+      tags:
+        - Swap
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - walletAddress
+                - quote
+              properties:
+                walletAddress:
+                  type: string
+                quote:
+                  type: object
+      responses:
+        '200':
+          description: Swap executed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  transactionHash:
+                    type: string
+                  from:
+                    type: string
+                  to:
+                    type: string
+                  sellToken:
+                    type: string
+                  buyToken:
+                    type: string
+                  sellAmount:
+                    type: string
+                  buyAmount:
+                    type: string
+                  status:
+                    type: string
+                  gasLimit:
+                    type: string
+                  gasPrice:
+                    type: string
+                  maxFeePerGas:
+                    type: string
+                  maxPriorityFeePerGas:
+                    type: string
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  
+  /health:
+    get:
+      summary: Health check
+      tags:
+        - System
+      responses:
+        '200':
+          description: System is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
